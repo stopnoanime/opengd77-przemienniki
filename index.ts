@@ -2,20 +2,29 @@ import { xml2js } from 'xml-js'
 import fetch from 'node-fetch';
 import { stringify } from 'csv-stringify/sync';
 import { writeFileSync } from 'fs';
+import { program } from "commander";
 
-const repeaterNames = [
-    'SR9E','SR9DKA', 'SR9SS', 'SR9DX','SR9DXK', 'SR9ZHP', 'SR9BN', 'SR9DMR', 'SR9DBN',
-    'SR9GC', 'SR9RSR', 'SR9PS', 'SR9S', 'SR9CSR',
-    'SR9SC','SR9US','SR9BSR','SR9ZAR','SR9ASR',
-    'SR2BW','SR2KU'
-];
-const addPMR = true;
-const DMRTg = 'Brandmeister';
+program
+    .name('opengd77-przemienniki')
+    .description('Fetches specified repeaters from przemienniki.net and exports them to a OpenGD77 compatible CSV')
+    .argument('<callsigns...>', 'Callsigns of repeaters to export')
+    .option('-o, --output <file>', 'File that the CSV will be saved in, default is Channels.csv')
+    .option('-t, --talkgroup <tg>', `Talkgroup to set in DMR Channels, default is 'Brandmeister'`)
+    .option('-p, --pmr', 'Add PMR Channels 1-16 to export');
 
-const przemiennikiXML = await (await fetch('https://przemienniki.net/export/rxf.xml')).text();
+program.parse();
+
+//Setup arguments
+const repeaterNames = program.args;
+const addPMR = !!program.opts().pmr;
+const DMRTg = program.opts().talkgroup || 'Brandmeister';
+const outputFileName = program.opts().output || 'Channels.csv';
+
+//Fetch data
+const przemiennikiXML = await (await fetch('https://przemienniki.net/export/rxf.xml?source=all&onlyworking=true')).text();
 const przemiennikiJS: any = xml2js(przemiennikiXML, {compact: true, alwaysArray: true});
 
-// Create array of repeaters that match criteria
+//Create array of repeaters that match criteria
 const repeaterArray = 
     (przemiennikiJS.rxf[0].repeaters[0].repeater as any[])
     .filter(r => repeaterNames.includes(r.qra[0]._text[0]))
@@ -137,4 +146,6 @@ const outputCSV = stringify(
 });
 
 //Write to file
-writeFileSync('./Channels.csv', outputCSV);
+writeFileSync(outputFileName, outputCSV);
+
+console.log(`Successfully exported ${repeaterArray.length} channels.`);
