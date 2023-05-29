@@ -9,7 +9,7 @@ program
     .description('Fetches specified repeaters from przemienniki.net and exports them to a OpenGD77 compatible CSV')
     .argument('<callsigns...>', 'Callsigns of repeaters to export')
     .option('-o, --output <file>', 'File that the CSV will be saved in, default is Channels.csv')
-    .option('-t, --talkgroup <tg>', `Talkgroup to set in DMR Channels, default is 'Brandmeister'`)
+    .option('-t, --talkgroup <tg>', `Talkgroup list to set in DMR Channels, default is 'Brandmeister'`)
     .option('-p, --pmr', 'Add PMR Channels 1-16 to export');
 
 program.parse();
